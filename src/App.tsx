@@ -1,18 +1,31 @@
-import { useCallback, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { Card, CardId } from './types/card';
 import { createDeck } from './utils/deck';
 import { useEvaluation } from './hooks/useEvaluation';
 import { Header } from './components/Header/Header';
 import { ResultDisplay } from './components/ResultDisplay/ResultDisplay';
 import { CardSelector } from './components/CardSelector/CardSelector';
-import { CameraScanner } from './components/CameraScanner/CameraScanner';
 import styles from './App.module.css';
+
+// Lazy-load CameraScanner so onnxruntime-web (25MB WASM) only loads when scanner opens.
+// This prevents memory pressure on iOS Safari which can cause page refreshes.
+const CameraScanner = lazy(() => import('./components/CameraScanner/CameraScanner'));
 
 function App() {
   const deck = useMemo(() => createDeck(), []);
   const [selectedIds, setSelectedIds] = useState<Set<CardId>>(new Set());
   const [scannerOpen, setScannerOpen] = useState(false);
   const result = useEvaluation(selectedIds, deck);
+
+  // Catch unhandled promise rejections to prevent iOS Safari page crashes
+  useEffect(() => {
+    const handler = (e: PromiseRejectionEvent) => {
+      e.preventDefault();
+      console.warn('Unhandled rejection caught:', e.reason);
+    };
+    window.addEventListener('unhandledrejection', handler);
+    return () => window.removeEventListener('unhandledrejection', handler);
+  }, []);
 
   const handleToggle = useCallback((card: Card) => {
     setSelectedIds((prev) => {
@@ -54,14 +67,16 @@ function App() {
         onScan={handleOpenScanner}
       />
       {scannerOpen && (
-        <CameraScanner
-          deck={deck}
-          selectedIds={selectedIds}
-          onSelectCards={handleSelectCards}
-          onClear={handleClear}
-          onClose={handleCloseScanner}
-          result={result}
-        />
+        <Suspense fallback={null}>
+          <CameraScanner
+            deck={deck}
+            selectedIds={selectedIds}
+            onSelectCards={handleSelectCards}
+            onClear={handleClear}
+            onClose={handleCloseScanner}
+            result={result}
+          />
+        </Suspense>
       )}
     </div>
   );

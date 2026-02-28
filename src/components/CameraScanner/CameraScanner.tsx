@@ -3,6 +3,7 @@ import type { Card as CardType, CardId } from '../../types/card';
 import { SUIT_SYMBOLS } from '../../types/card';
 import type { EvaluationResult } from '../../types/evaluation';
 import { HERO_NAMES } from '../../types/evaluation';
+import { useCountUp } from '../../hooks/useCountUp';
 import { useCamera } from '../../hooks/useCamera';
 import { recognizeCards, preloadModel } from '../../services/cardRecognition';
 import styles from './CameraScanner.module.css';
@@ -30,6 +31,7 @@ export function CameraScanner({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scanState, setScanState] = useState<ScanState>('live');
   const [scanError, setScanError] = useState<string | null>(null);
+  const displayMultiplier = useCountUp(scanState === 'result' ? (result?.multiplier ?? 0) : 0);
 
   useEffect(() => {
     start().catch(() => {}); // Error state handled inside the hook
@@ -161,10 +163,21 @@ export function CameraScanner({
                     return pts === 0 ? '牛牛' : `牛${pts}`;
                   })()}
                 </span>
-                <span className={`${styles.multiplierBadge} ${styles[`tier${result.multiplier}`] ?? ''}`}>
-                  {result.multiplier}x {result.label}
-                </span>
               </div>
+
+              {/* Multiplier meter — big, animated */}
+              {(() => {
+                const landed = displayMultiplier === result.multiplier;
+                return (
+                  <div
+                    className={`${styles.multiplierMeter} ${landed ? styles.meterLanded : ''}`}
+                    data-tier={landed ? result.multiplier : displayMultiplier}
+                  >
+                    <span className={styles.meterValue}>{displayMultiplier}x</span>
+                    <span className={styles.meterLabel}>{landed ? result.label : ''}</span>
+                  </div>
+                );
+              })()}
 
               {/* Card arrangement — single grid: final 2 top, base 3 bottom */}
               <div className={styles.arrangementGuide}>
@@ -222,10 +235,10 @@ export function CameraScanner({
             <>
               <div className={styles.pointsHero} data-tier={0}>
                 <span className={styles.pointsValueMuted}>無牛</span>
-                <span className={styles.pointsSubtext}>No Valid Base · 0 Points</span>
-                <span className={`${styles.multiplierBadge} ${styles.tier0}`}>
-                  0x {result.label}
-                </span>
+              </div>
+              <div className={`${styles.multiplierMeter} ${styles.meterLanded}`} data-tier={0}>
+                <span className={styles.meterValue}>0x</span>
+                <span className={styles.meterLabel}>{result.label}</span>
               </div>
               <div className={styles.arrangementGuide}>
                 <span className={styles.guideHint}>
@@ -271,3 +284,5 @@ export function CameraScanner({
     </div>
   );
 }
+
+export default CameraScanner;

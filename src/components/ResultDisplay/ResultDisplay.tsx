@@ -1,6 +1,7 @@
 import type { EvaluationResult } from '../../types/evaluation';
 import { HERO_NAMES } from '../../types/evaluation';
 import { SUIT_SYMBOLS } from '../../types/card';
+import { useCountUp } from '../../hooks/useCountUp';
 import styles from './ResultDisplay.module.css';
 
 interface ResultDisplayProps {
@@ -15,6 +16,8 @@ function getPointsText(result: EvaluationResult): string {
 }
 
 export function ResultDisplay({ result, selectedCount }: ResultDisplayProps) {
+  const displayMultiplier = useCountUp(result?.multiplier ?? 0);
+
   if (selectedCount < 5) {
     return (
       <div className={styles.container}>
@@ -30,10 +33,12 @@ export function ResultDisplay({ result, selectedCount }: ResultDisplayProps) {
 
   if (!result) return null;
 
+  const landed = displayMultiplier === result.multiplier;
+
   return (
     <div className={styles.container} data-tier={result.multiplier}>
       {/* Celebration effects for high multipliers */}
-      {result.multiplier >= 2 && (
+      {result.multiplier >= 2 && landed && (
         <div className={styles.celebrationLayer} data-tier={result.multiplier}>
           <div className={styles.sparkle} style={{ top: '10%', left: '10%', animationDelay: '0s' }} />
           <div className={styles.sparkle} style={{ top: '5%', left: '50%', animationDelay: '0.3s' }} />
@@ -57,9 +62,15 @@ export function ResultDisplay({ result, selectedCount }: ResultDisplayProps) {
             <span className={styles.pointsValue}>
               {getPointsText(result)}
             </span>
-            <span className={`${styles.multiplierBadge} ${styles[`tier${result.multiplier}`] ?? ''}`}>
-              {result.multiplier}x {result.label}
-            </span>
+          </div>
+
+          {/* Multiplier meter — big, animated */}
+          <div
+            className={`${styles.multiplierMeter} ${landed ? styles.meterLanded : ''}`}
+            data-tier={landed ? result.multiplier : displayMultiplier}
+          >
+            <span className={styles.meterValue}>{displayMultiplier}x</span>
+            <span className={styles.meterLabel}>{landed ? result.label : ''}</span>
           </div>
 
           {/* Card arrangement guide */}
@@ -116,9 +127,13 @@ export function ResultDisplay({ result, selectedCount }: ResultDisplayProps) {
         <>
           <div className={styles.pointsHero} data-tier={0}>
             <span className={styles.pointsValueMuted}>無牛</span>
-            <span className={`${styles.multiplierBadge} ${styles.tier0}`}>
-              0x {result.label}
-            </span>
+          </div>
+          <div
+            className={`${styles.multiplierMeter} ${styles.meterLanded}`}
+            data-tier={0}
+          >
+            <span className={styles.meterValue}>0x</span>
+            <span className={styles.meterLabel}>{result.label}</span>
           </div>
           <div className={styles.arrangementGuide}>
             <span className={styles.guideHintOnly}>

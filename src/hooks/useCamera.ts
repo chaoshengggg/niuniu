@@ -4,6 +4,24 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // This avoids repeated camera permission prompts on iOS Safari.
 let sharedStream: MediaStream | null = null;
 
+// Hidden video element that keeps the stream "consumed" so iOS Safari
+// doesn't kill the tracks when the scanner component unmounts.
+let keepAliveEl: HTMLVideoElement | null = null;
+
+function ensureKeepAlive(stream: MediaStream) {
+  if (!keepAliveEl) {
+    keepAliveEl = document.createElement('video');
+    keepAliveEl.setAttribute('muted', '');
+    keepAliveEl.setAttribute('playsinline', '');
+    keepAliveEl.muted = true;
+    keepAliveEl.style.cssText =
+      'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(keepAliveEl);
+  }
+  keepAliveEl.srcObject = stream;
+  keepAliveEl.play().catch(() => {});
+}
+
 interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   error: string | null;
@@ -22,7 +40,7 @@ export function useCamera(): UseCameraReturn {
 
   const stop = useCallback(() => {
     // Only detach from the video element — don't kill the stream.
-    // The stream stays alive so we can reuse it without re-prompting.
+    // The keepAliveEl continues holding the stream so iOS won't kill it.
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
@@ -37,6 +55,8 @@ export function useCamera(): UseCameraReturn {
           video: { facingMode: 'environment' },
           audio: false,
         });
+        // Attach to hidden element so iOS doesn't kill it between scanner sessions
+        ensureKeepAlive(sharedStream);
       }
       if (videoRef.current) {
         videoRef.current.srcObject = sharedStream;
@@ -54,7 +74,7 @@ export function useCamera(): UseCameraReturn {
 
   useEffect(() => {
     return () => {
-      // On unmount, just detach — don't stop the stream
+      // On unmount, just detach from the visible video — keepAliveEl holds the stream
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
