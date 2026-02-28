@@ -162,9 +162,11 @@
 
 /* Result section — below camera after recognition */
 .resultSection {
+  position: relative;
   flex: 0 1 auto;
   overflow-y: auto;
-  padding: var(--gap-md) var(--gap-md) calc(var(--gap-lg) + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  padding: var(--gap-lg) var(--gap-md) calc(var(--gap-lg) + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -172,85 +174,167 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Points + multiplier header */
-.evalHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-lg);
-  width: 100%;
-  justify-content: center;
+/* ============================================
+   Celebration effects
+   ============================================ */
+.celebrationLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
 
-.pointsDisplay {
+/* Background glow per tier */
+.celebrationLayer[data-tier="2"] { background: radial-gradient(ellipse at 50% 30%, rgba(88, 214, 141, 0.12) 0%, transparent 70%); }
+.celebrationLayer[data-tier="3"] { background: radial-gradient(ellipse at 50% 30%, rgba(93, 173, 226, 0.15) 0%, transparent 70%); }
+.celebrationLayer[data-tier="5"] { background: radial-gradient(ellipse at 50% 30%, rgba(232, 160, 255, 0.18) 0%, transparent 70%); }
+.celebrationLayer[data-tier="7"] { background: radial-gradient(ellipse at 50% 30%, rgba(240, 204, 107, 0.25) 0%, transparent 70%); }
+
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  animation: sparkleFloat 2s ease-in-out infinite;
+  opacity: 0;
+}
+
+.celebrationLayer[data-tier="3"] .sparkle { background: var(--tier-3); }
+.celebrationLayer[data-tier="5"] .sparkle { background: var(--tier-5); }
+.celebrationLayer[data-tier="7"] .sparkle { background: var(--tier-7); }
+
+@keyframes sparkleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0); }
+  30% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+  70% { opacity: 0.8; transform: translateY(-25px) scale(1); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.3); }
+}
+
+/* ============================================
+   Points hero — big centered display
+   ============================================ */
+.pointsHero {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  padding: var(--gap-sm) 0;
 }
 
 .pointsValue {
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 1.8rem;
+  font-size: 3rem;
   color: var(--gold-bright);
-  line-height: 1.2;
+  line-height: 1.1;
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.pointsHero[data-tier="7"] .pointsValue {
+  background: linear-gradient(135deg, #f0cc6b, #fff6d5, #f0cc6b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(240, 204, 107, 0.5));
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, shimmer 2s ease-in-out infinite;
+}
+
+.pointsHero[data-tier="5"] .pointsValue {
+  color: var(--tier-5);
+  filter: drop-shadow(0 0 8px rgba(232, 160, 255, 0.4));
+}
+
+.pointsHero[data-tier="3"] .pointsValue {
+  color: var(--tier-3);
+  filter: drop-shadow(0 0 8px rgba(93, 173, 226, 0.4));
+}
+
+.pointsHero[data-tier="2"] .pointsValue {
+  color: var(--tier-2);
+  filter: drop-shadow(0 0 6px rgba(88, 214, 141, 0.3));
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(240, 204, 107, 0.5)) brightness(1); }
+  50% { filter: drop-shadow(0 0 20px rgba(240, 204, 107, 0.8)) brightness(1.15); }
 }
 
 .pointsValueMuted {
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 1.8rem;
+  font-size: 3rem;
   color: var(--text-muted);
-  line-height: 1.2;
+  line-height: 1.1;
+  opacity: 0.5;
 }
 
-.pointsLabel {
-  font-size: 0.7rem;
+.pointsSubtext {
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
-.multiplierDisplay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.resultBadge {
+/* Multiplier badge — sits below the points */
+.multiplierBadge {
+  display: inline-block;
+  margin-top: 4px;
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 1.4rem;
-  padding: 4px 12px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--gold), #dbb85a);
-  color: #1a1207;
-  line-height: 1.2;
+  font-size: 0.8rem;
+  padding: 4px 14px;
+  border-radius: 20px;
+  line-height: 1.3;
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
 }
 
-.resultBadgeMuted {
-  font-family: 'Playfair Display', serif;
-  font-weight: 900;
-  font-size: 1.4rem;
-  padding: 4px 12px;
-  border-radius: var(--radius-md);
+.tier0 {
   background: var(--tier-0);
   color: #fff;
-  line-height: 1.2;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-.multiplierLabel {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-align: center;
-  max-width: 120px;
+.tier1 {
+  background: linear-gradient(135deg, var(--tier-1), #8e9a9b);
+  color: #1a1a1a;
 }
 
-/* Card arrangement guide */
+.tier2 {
+  background: linear-gradient(135deg, var(--tier-2), #48c078);
+  color: #0a2215;
+}
+
+.tier3 {
+  background: linear-gradient(135deg, var(--tier-3), #4a9ad4);
+  color: #0a1a2a;
+}
+
+.tier5 {
+  background: linear-gradient(135deg, var(--tier-5), #d080ee);
+  color: #1a0a22;
+}
+
+.tier7 {
+  background: linear-gradient(135deg, var(--tier-7), #dbb85a);
+  color: #1a1207;
+  box-shadow: 0 0 16px rgba(240, 204, 107, 0.4);
+}
+
+/* ============================================
+   Card arrangement guide — single grid layout
+   ============================================ */
 .arrangementGuide {
+  position: relative;
+  z-index: 1;
   width: 100%;
   background: var(--felt-surface);
   border: 1px solid var(--felt-border);
@@ -263,88 +347,71 @@
 }
 
 .guideTitle {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: var(--gold-dim);
 }
 
-.arrangement {
-  display: flex;
-  align-items: stretch;
-  gap: var(--gap-md);
-  width: 100%;
-  justify-content: center;
-}
-
-.cardGroup {
+.cardLayout {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: var(--gap-sm);
-  background: var(--felt-light);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--felt-border);
-  flex: 1;
-  max-width: 180px;
+  gap: var(--gap-sm);
+  width: 100%;
 }
 
-.groupHeader {
-  font-size: 0.65rem;
+.layoutRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+}
+
+.rowLabel {
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
+  min-width: 38px;
+  text-align: right;
 }
 
-.groupCards {
+.rowCards {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 .arrangeCard {
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
   background: var(--card-bg);
   border: 1.5px solid var(--card-border);
   color: var(--black-suit);
   white-space: nowrap;
-  box-shadow: 0 1px 3px var(--card-shadow);
+  box-shadow: 0 2px 6px var(--card-shadow);
 }
 
 .arrangeCard[data-red] {
   color: var(--red-suit);
 }
 
-.groupSum {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.groupDivider {
-  width: 1px;
-  align-self: stretch;
-  background: var(--felt-border);
-  margin: var(--gap-sm) 0;
-}
-
 .guideHint {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   text-align: center;
   font-style: italic;
 }
 
 .warningText {
+  position: relative;
+  z-index: 1;
   font-size: 0.8rem;
   color: var(--gold);
   text-align: center;
@@ -385,6 +452,8 @@
 
 /* Done button */
 .doneBtn {
+  position: relative;
+  z-index: 1;
   padding: 12px 40px;
   border-radius: 24px;
   background: linear-gradient(135deg, var(--gold), #dbb85a);

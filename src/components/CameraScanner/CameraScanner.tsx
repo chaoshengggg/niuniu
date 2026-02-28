@@ -129,45 +129,92 @@ export function CameraScanner({
 
       {/* Result section */}
       {scanState === 'result' && (
-        <div className={styles.resultSection}>
+        <div
+          className={styles.resultSection}
+          data-tier={result?.multiplier ?? 0}
+        >
+          {/* Celebration effects for high multipliers */}
+          {result && result.multiplier >= 2 && (
+            <div className={styles.celebrationLayer} data-tier={result.multiplier}>
+              <div className={styles.sparkle} style={{ top: '10%', left: '10%', animationDelay: '0s' }} />
+              <div className={styles.sparkle} style={{ top: '5%', left: '50%', animationDelay: '0.3s' }} />
+              <div className={styles.sparkle} style={{ top: '15%', left: '85%', animationDelay: '0.6s' }} />
+              <div className={styles.sparkle} style={{ top: '60%', left: '5%', animationDelay: '0.9s' }} />
+              <div className={styles.sparkle} style={{ top: '70%', left: '90%', animationDelay: '1.2s' }} />
+              {result.multiplier >= 5 && (
+                <>
+                  <div className={styles.sparkle} style={{ top: '30%', left: '20%', animationDelay: '0.4s' }} />
+                  <div className={styles.sparkle} style={{ top: '45%', left: '75%', animationDelay: '0.7s' }} />
+                  <div className={styles.sparkle} style={{ top: '80%', left: '40%', animationDelay: '1.0s' }} />
+                </>
+              )}
+            </div>
+          )}
+
           {result && result.type !== 'no_valid_base' ? (
             <>
-              {/* Points + Multiplier header */}
-              <div className={styles.evalHeader}>
-                <div className={styles.pointsDisplay}>
-                  <span className={styles.pointsValue}>
-                    {result.type === 'five_face_cards'
-                      ? '五公'
-                      : (() => {
-                          const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
-                          return pts === 0 ? '牛牛' : `牛${pts}`;
-                        })()}
-                  </span>
-                  <span className={styles.pointsLabel}>
-                    {result.type === 'five_face_cards'
-                      ? 'Five Face Cards'
-                      : (() => {
-                          const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
-                          return pts === 0 ? 'Niu Niu · 10 Points' : `Niu ${pts} · ${pts} Points`;
-                        })()}
-                  </span>
-                </div>
-                <div className={styles.multiplierDisplay}>
-                  <span className={styles.resultBadge}>{result.multiplier}x</span>
-                  <span className={styles.multiplierLabel}>{result.label}</span>
-                </div>
+              {/* Big centered points value */}
+              <div className={styles.pointsHero} data-tier={result.multiplier}>
+                <span className={styles.pointsValue}>
+                  {result.type === 'five_face_cards'
+                    ? '五公'
+                    : (() => {
+                        const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
+                        return pts === 0 ? '牛牛' : `牛${pts}`;
+                      })()}
+                </span>
+                <span className={styles.pointsSubtext}>
+                  {result.type === 'five_face_cards'
+                    ? 'Five Face Cards'
+                    : (() => {
+                        const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
+                        return pts === 0 ? 'Niu Niu · 10 Points' : `Niu ${pts} · ${pts} Points`;
+                      })()}
+                </span>
+                <span className={`${styles.multiplierBadge} ${styles[`tier${result.multiplier}`] ?? ''}`}>
+                  {result.multiplier}x {result.label}
+                </span>
               </div>
 
-              {/* Card arrangement guide */}
-              {result.type !== 'five_face_cards' && (
-                <div className={styles.arrangementGuide}>
-                  <span className={styles.guideTitle}>How to show your cards</span>
-                  <div className={styles.arrangement}>
-                    {/* Base 3 */}
-                    <div className={styles.cardGroup}>
-                      <span className={styles.groupHeader}>Base (牛)</span>
-                      <div className={styles.groupCards}>
-                        {result.base.map((c) => {
+              {/* Card arrangement — single grid: final 2 top, base 3 bottom */}
+              <div className={styles.arrangementGuide}>
+                <span className={styles.guideTitle}>How to show your cards</span>
+                <div className={styles.cardLayout}>
+                  {result.type !== 'five_face_cards' ? (
+                    <>
+                      {/* Top row: Final 2 */}
+                      <div className={styles.layoutRow}>
+                        <span className={styles.rowLabel}>Final 2</span>
+                        <div className={styles.rowCards}>
+                          {result.final2.map((c) => {
+                            const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
+                            return (
+                              <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
+                                {c.rank}{SUIT_SYMBOLS[c.suit]}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {/* Bottom row: Base 3 */}
+                      <div className={styles.layoutRow}>
+                        <span className={styles.rowLabel}>Base</span>
+                        <div className={styles.rowCards}>
+                          {result.base.map((c) => {
+                            const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
+                            return (
+                              <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
+                                {c.rank}{SUIT_SYMBOLS[c.suit]}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.layoutRow}>
+                      <div className={styles.rowCards}>
+                        {selectedCards.map((c) => {
                           const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
                           return (
                             <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
@@ -176,68 +223,24 @@ export function CameraScanner({
                           );
                         })}
                       </div>
-                      <span className={styles.groupSum}>
-                        = {result.base.reduce((s, c) => s + getTransformedValue(c.rank), 0)}
-                      </span>
                     </div>
-
-                    <div className={styles.groupDivider} />
-
-                    {/* Final 2 */}
-                    <div className={styles.cardGroup}>
-                      <span className={styles.groupHeader}>Final 2</span>
-                      <div className={styles.groupCards}>
-                        {result.final2.map((c) => {
-                          const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
-                          return (
-                            <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
-                              {c.rank}{SUIT_SYMBOLS[c.suit]}
-                            </span>
-                          );
-                        })}
-                      </div>
-                      <span className={styles.groupSum}>
-                        = {(result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10} pts
-                      </span>
-                    </div>
-                  </div>
-                  <span className={styles.guideHint}>
-                    Place base 3 cards on the left, final 2 on the right
-                  </span>
+                  )}
                 </div>
-              )}
-
-              {/* Five face cards — simple arrangement */}
-              {result.type === 'five_face_cards' && (
-                <div className={styles.arrangementGuide}>
-                  <span className={styles.guideTitle}>How to show your cards</span>
-                  <div className={styles.groupCards}>
-                    {selectedCards.map((c) => {
-                      const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
-                      return (
-                        <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
-                          {c.rank}{SUIT_SYMBOLS[c.suit]}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <span className={styles.guideHint}>
-                    Show all 5 face cards — automatic win!
-                  </span>
-                </div>
-              )}
+                <span className={styles.guideHint}>
+                  {result.type === 'five_face_cards'
+                    ? 'Show all 5 face cards — automatic win!'
+                    : 'Show final 2 on top, base 3 on the bottom'}
+                </span>
+              </div>
             </>
           ) : result && result.type === 'no_valid_base' ? (
             <>
-              <div className={styles.evalHeader}>
-                <div className={styles.pointsDisplay}>
-                  <span className={styles.pointsValueMuted}>無牛</span>
-                  <span className={styles.pointsLabel}>No Valid Base · 0 Points</span>
-                </div>
-                <div className={styles.multiplierDisplay}>
-                  <span className={styles.resultBadgeMuted}>0x</span>
-                  <span className={styles.multiplierLabel}>{result.label}</span>
-                </div>
+              <div className={styles.pointsHero} data-tier={0}>
+                <span className={styles.pointsValueMuted}>無牛</span>
+                <span className={styles.pointsSubtext}>No Valid Base · 0 Points</span>
+                <span className={`${styles.multiplierBadge} ${styles.tier0}`}>
+                  0x {result.label}
+                </span>
               </div>
               <div className={styles.arrangementGuide}>
                 <span className={styles.guideHint}>
