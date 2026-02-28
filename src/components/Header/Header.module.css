@@ -1,0 +1,61 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0 12px;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.02em;
+}
+
+.chinese {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px var(--gold-glow), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.english {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Art Deco diamond ornaments */
+.ornamentLeft,
+.ornamentRight {
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim));
+  position: relative;
+}
+
+.ornamentRight {
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+
+.ornamentLeft::after,
+.ornamentRight::after {
+  content: '◆';
+  position: absolute;
+  font-size: 6px;
+  color: var(--gold-dim);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ornamentLeft::after {
+  right: -4px;
+}
+
+.ornamentRight::after {
+  left: -4px;
+}

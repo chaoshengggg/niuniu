@@ -1,0 +1,118 @@
+.selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.counter {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.count {
+  font-size: 1.1rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.countDivider {
+  color: var(--text-muted);
+}
+
+.countTotal {
+  color: var(--text-muted);
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.scanBtn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1207;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, var(--gold), #dbb85a);
+  transition: all 0.15s ease;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scanBtn:hover {
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.scanBtn:active {
+  transform: scale(0.96);
+}
+
+.clearBtn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--felt-border);
+  background: var(--felt-surface);
+  transition: all 0.15s ease;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clearBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--gold-dim);
+}
+
+.clearBtn:active {
+  transform: scale(0.96);
+}
+
+.suitGroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.suitGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-sm);
+}
+
+.suitLabel {
+  font-size: 1.1rem;
+  min-width: 22px;
+  padding-top: 18px;
+  text-align: center;
+  color: var(--black-suit);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.suitLabel[data-red] {
+  color: var(--red-suit);
+}
+
+.cardRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: var(--gap-xs);
+  flex: 1;
+}

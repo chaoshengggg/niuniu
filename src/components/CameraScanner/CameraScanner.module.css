@@ -1,0 +1,236 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--felt);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Camera section — top ~40% */
+.cameraSection {
+  position: relative;
+  flex: 0 0 40%;
+  background: #000;
+  overflow: hidden;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cameraError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  padding: var(--gap-lg);
+  text-align: center;
+}
+
+.cameraErrorIcon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.cameraErrorText {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Close button */
+.closeBtn {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.closeBtn:active {
+  transform: scale(0.9);
+}
+
+/* Middle strip — selected cards + result */
+.middleStrip {
+  flex-shrink: 0;
+  padding: var(--gap-sm) var(--gap-md);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  border-bottom: 1px solid var(--felt-border);
+  min-height: 44px;
+  overflow-x: auto;
+}
+
+.chipList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chip {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--card-selected);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-bright);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chip[data-red] {
+  color: #e87070;
+}
+
+.counter {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.counterCurrent {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.resultBadge {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 0.85rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--gold), #dbb85a);
+  color: #1a1207;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Bottom picker section */
+.pickerSection {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--gap-sm) var(--gap-sm) calc(var(--gap-md) + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+.suitRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.suitIcon {
+  font-size: 0.85rem;
+  min-width: 18px;
+  text-align: center;
+  color: var(--black-suit);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.suitIcon[data-red] {
+  color: var(--red-suit);
+}
+
+.cardGrid {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+
+.miniCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 54px;
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  color: var(--black-suit);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.miniCard[data-red] {
+  color: var(--red-suit);
+}
+
+.miniCard:active:not(.miniCardDisabled) {
+  transform: scale(0.92);
+}
+
+.miniCardSelected {
+  background: var(--card-selected);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+.miniCardDisabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.miniRank {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.miniSuit {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+/* Done button */
+.doneBtn {
+  position: absolute;
+  bottom: calc(var(--gap-lg) + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 32px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--gold), #dbb85a);
+  color: #1a1207;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 16px rgba(212, 168, 67, 0.4);
+  z-index: 10;
+}
+
+.doneBtn:active {
+  transform: translateX(-50%) scale(0.95);
+}

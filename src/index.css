@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Felt & Casino palette */
+  --felt: #0a1a12;
+  --felt-surface: #0f2318;
+  --felt-light: #163b27;
+  --felt-border: #1e4d33;
+
+  /* Gold foil */
+  --gold: #d4a843;
+  --gold-bright: #f0cc6b;
+  --gold-dim: #8b7232;
+  --gold-glow: rgba(212, 168, 67, 0.25);
+
+  /* Cards */
+  --card-bg: #f5f0e8;
+  --card-bg-hover: #faf6ef;
+  --card-selected: #1a5c3a;
+  --card-border: #d6cbb8;
+  --card-shadow: rgba(0, 0, 0, 0.35);
+
+  /* Suit colors */
+  --red-suit: #c0392b;
+  --black-suit: #1a1a1a;
+
+  /* Multiplier tier colors */
+  --tier-7: #f0cc6b;
+  --tier-5: #e8a0ff;
+  --tier-3: #5dade2;
+  --tier-2: #58d68d;
+  --tier-1: #aab7b8;
+  --tier-0: #6b6b6b;
+
+  /* Text */
+  --text-primary: #e8e0d4;
+  --text-secondary: #9ca89e;
+  --text-muted: #5a6b5e;
+
+  /* Spacing */
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 12px;
+  --gap-lg: 20px;
+  --gap-xl: 28px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--felt);
+  color: var(--text-primary);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Subtle felt table radial lighting */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(22, 59, 39, 0.5) 0%, transparent 70%),
+    radial-gradient(ellipse at 80% 30%, rgba(30, 77, 51, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 50% 100%, rgba(10, 26, 18, 0.8) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--gap-md) var(--gap-md) calc(var(--gap-xl) + env(safe-area-inset-bottom));
+  min-height: 100dvh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--felt-border);
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--felt);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Kill default button styles */
+button {
+  font: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
