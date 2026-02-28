@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card as CardType, CardId } from '../../types/card';
 import { SUIT_SYMBOLS } from '../../types/card';
 import type { EvaluationResult } from '../../types/evaluation';
-import { getTransformedValue } from '../../logic/transform';
+import { HERO_NAMES } from '../../types/evaluation';
 import { useCamera } from '../../hooks/useCamera';
 import { recognizeCards, preloadModel } from '../../services/cardRecognition';
 import styles from './CameraScanner.module.css';
@@ -156,12 +156,10 @@ export function CameraScanner({
               {/* Big centered points value */}
               <div className={styles.pointsHero} data-tier={result.multiplier}>
                 <span className={styles.pointsValue}>
-                  {result.type === 'five_face_cards'
-                    ? '五公'
-                    : (() => {
-                        const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
-                        return pts === 0 ? '牛牛' : `牛${pts}`;
-                      })()}
+                  {HERO_NAMES[result.type] || (() => {
+                    const pts = (result.final2.reduce((s, c) => s + result.cardValues[c.id], 0)) % 10;
+                    return pts === 0 ? '牛牛' : `牛${pts}`;
+                  })()}
                 </span>
                 <span className={`${styles.multiplierBadge} ${styles[`tier${result.multiplier}`] ?? ''}`}>
                   {result.multiplier}x {result.label}
@@ -218,11 +216,6 @@ export function CameraScanner({
                     </div>
                   )}
                 </div>
-                <span className={styles.guideHint}>
-                  {result.type === 'five_face_cards'
-                    ? 'Show all 5 face cards — automatic win!'
-                    : 'Show final 2 on top, base 3 on the bottom'}
-                </span>
               </div>
             </>
           ) : result && result.type === 'no_valid_base' ? (

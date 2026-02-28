@@ -13,12 +13,51 @@ function isAceOfSpades(card: Card): boolean {
   return card.rank === 'A' && card.suit === 'spades';
 }
 
-function isValidBase(base: Card[]): boolean {
-  const sum = base.reduce((acc, c) => acc + getTransformedValue(c.rank), 0);
+/**
+ * For cards with rank 3 or 6, both values (3 and 6) are possible.
+ * Generate all value assignment combinations for the hand.
+ * Each assignment is a Map from Card → effective numeric value.
+ */
+function generateValueAssignments(cards: Card[]): Map<Card, number>[] {
+  const flexCards = cards.filter((c) => c.rank === '3' || c.rank === '6');
+
+  if (flexCards.length === 0) {
+    const map = new Map<Card, number>();
+    for (const c of cards) map.set(c, getTransformedValue(c.rank));
+    return [map];
+  }
+
+  const numAssignments = 1 << flexCards.length;
+  const maps: Map<Card, number>[] = [];
+
+  for (let mask = 0; mask < numAssignments; mask++) {
+    const map = new Map<Card, number>();
+
+    for (const c of cards) {
+      if (c.rank !== '3' && c.rank !== '6') {
+        map.set(c, getTransformedValue(c.rank));
+      }
+    }
+
+    for (let i = 0; i < flexCards.length; i++) {
+      map.set(flexCards[i], (mask >> i) & 1 ? 6 : 3);
+    }
+
+    maps.push(map);
+  }
+
+  return maps;
+}
+
+function isValidBase(base: Card[], valueMap: Map<Card, number>): boolean {
+  const sum = base.reduce((acc, c) => acc + valueMap.get(c)!, 0);
   return sum % 10 === 0;
 }
 
-function evaluateFinal2(final2: [Card, Card]): { type: MultiplierType; multiplier: number } {
+function evaluateFinal2(
+  final2: [Card, Card],
+  valueMap: Map<Card, number>,
+): { type: MultiplierType; multiplier: number } {
   const [a, b] = final2;
 
   // Face + Ace of Spades → 5x
@@ -35,13 +74,19 @@ function evaluateFinal2(final2: [Card, Card]): { type: MultiplierType; multiplie
   }
 
   // Sum to a multiple of 10 → 2x (e.g. A+9=10, J+Q=20)
-  const sum = getTransformedValue(a.rank) + getTransformedValue(b.rank);
+  const sum = valueMap.get(a)! + valueMap.get(b)!;
   if (sum % 10 === 0) {
     return { type: 'sum_ten', multiplier: 2 };
   }
 
   // Valid base but no bonus → 1x
   return { type: 'valid_base_no_bonus', multiplier: 1 };
+}
+
+function toCardValues(valueMap: Map<Card, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [card, value] of valueMap) result[card.id] = value;
+  return result;
 }
 
 export function evaluateHand(cards: Card[]): EvaluationResult {
@@ -52,37 +97,53 @@ export function evaluateHand(cards: Card[]): EvaluationResult {
       label: MULTIPLIER_LABELS.no_valid_base,
       base: [],
       final2: [],
+      cardValues: {},
     };
   }
 
   // Step 1: Five Face Card check → 7x
   if (cards.every(isFaceCard)) {
+    const cardValues: Record<string, number> = {};
+    for (const c of cards) cardValues[c.id] = getTransformedValue(c.rank);
     return {
       multiplier: MULTIPLIER_VALUES.five_face_cards,
       type: 'five_face_cards',
       label: MULTIPLIER_LABELS.five_face_cards,
       base: cards.slice(0, 3),
       final2: cards.slice(3) as [Card, Card],
+      cardValues,
     };
   }
 
-  // Step 2-3: Try all splits, find best
+  // Step 2-3: Try all splits × all value assignments, find best
   const splits = generateSplits(cards);
+  const valueMaps = generateValueAssignments(cards);
   let best: EvaluationResult | null = null;
+  let bestPoints = -1;
 
-  for (const split of splits) {
-    if (!isValidBase(split.base)) continue;
+  for (const valueMap of valueMaps) {
+    for (const split of splits) {
+      if (!isValidBase(split.base, valueMap)) continue;
 
-    const result = evaluateFinal2(split.final2);
+      const result = evaluateFinal2(split.final2, valueMap);
+      const points = (valueMap.get(split.final2[0])! + valueMap.get(split.final2[1])!) % 10;
 
-    if (!best || result.multiplier > best.multiplier) {
-      best = {
-        multiplier: result.multiplier,
-        type: result.type,
-        label: MULTIPLIER_LABELS[result.type],
-        base: split.base,
-        final2: split.final2,
-      };
+      // Pick highest multiplier; tiebreak by highest final-2 points
+      if (
+        !best ||
+        result.multiplier > best.multiplier ||
+        (result.multiplier === best.multiplier && points > bestPoints)
+      ) {
+        best = {
+          multiplier: result.multiplier,
+          type: result.type,
+          label: MULTIPLIER_LABELS[result.type],
+          base: split.base,
+          final2: split.final2,
+          cardValues: toCardValues(valueMap),
+        };
+        bestPoints = points;
+      }
     }
   }
 
@@ -93,6 +154,7 @@ export function evaluateHand(cards: Card[]): EvaluationResult {
       label: MULTIPLIER_LABELS.no_valid_base,
       base: [],
       final2: [],
+      cardValues: {},
     };
   }
 

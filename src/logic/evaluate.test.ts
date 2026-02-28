@@ -86,20 +86,10 @@ describe('evaluateHand', () => {
     expect(result.type).toBe('no_valid_base');
   });
 
-  it('handles 3↔6 swap in base correctly', () => {
-    // raw 3 → transformed 6, raw 6 → transformed 3
-    // Base: 3(→6) + 6(→3) + A(→1) = 10 ✓, final 2: 10+10 = not pair, sum=20 → 1x
-    // But also: base could include the 10s. Let's be precise.
+  it('handles 3↔6 flexibility in base correctly', () => {
     // Cards: 3♥, 6♦, 4♣, 10♠, 10♥
-    // Possible base with 3,6,4: transformed 6+3+4=13 ✗
-    // Possible base with 3,6,10: transformed 6+3+10=19 ✗
-    // Possible base with 3,4,10: transformed 6+4+10=20 ✓ → final2: 6(3)+10(10)=13 → 1x
-    // Possible base with 6,4,10: transformed 3+4+10=17 ✗
-    // Possible base with 3,10,10: transformed 6+10+10=26 ✗
-    // Possible base with 6,10,10: transformed 3+10+10=23 ✗
-    // Possible base with 4,10,10: transformed 4+10+10=24 ✗
-    // Possible base with 3,6,10(second): same as 3,6,10 = 19 ✗
-    // So only valid split: base={3,4,10♠}, final2={6,10♥} → 1x
+    // With flexible 3/6 values, base {3=3, 6=3, 4} = 3+3+4=10 ✓
+    // final2 {10♠, 10♥} → pair (3x) since both rank '10'
     const result = evaluateHand([
       card('3', 'hearts'),
       card('6', 'diamonds'),
@@ -107,14 +97,31 @@ describe('evaluateHand', () => {
       card('10', 'spades'),
       card('10', 'hearts'),
     ]);
-    expect(result.multiplier).toBe(1);
-    expect(result.type).toBe('valid_base_no_bonus');
+    expect(result.multiplier).toBe(3);
+    expect(result.type).toBe('pair');
   });
 
-  it('3+6 as final 2 is NOT a pair', () => {
+  it('rank 3 in final 2 uses raw value 3 when it gives higher result', () => {
+    // Cards: 7♠, 3♥, 10♠, K♠, Q♦
+    // Base {10, K, Q} = 30 ✓
+    // Final 2: {7, 3}: if 3=3 → 7+3=10 → sum_ten 2x (best)
+    //                   if 3=6 → 7+6=13 → 牛3, 1x
+    const result = evaluateHand([
+      card('7', 'spades'),
+      card('3', 'hearts'),
+      card('10', 'spades'),
+      card('K', 'spades'),
+      card('Q', 'diamonds'),
+    ]);
+    expect(result.multiplier).toBe(2);
+    expect(result.type).toBe('sum_ten');
+  });
+
+  it('3+6 as final 2 is NOT a pair but picks best point value', () => {
     // Base: J+Q+K = 30 (valid), final 2: 3 + 6
     // 3 and 6 have different raw ranks → NOT a pair
-    // transformed: 6 + 3 = 9 → not sum 10
+    // Possible sums: 3+3=6, 3+6=9, 6+3=9, 6+6=12→2
+    // Best: 牛9 (1x), no sum hits 10
     const result = evaluateHand([
       card('J', 'spades'),
       card('Q', 'hearts'),
