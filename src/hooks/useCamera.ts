@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  stream: MediaStream | null;
   error: string | null;
   start: () => Promise<void>;
   stop: () => void;
@@ -10,18 +9,18 @@ interface UseCameraReturn {
 
 export function useCamera(): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const stop = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-  }, [stream]);
+  }, []);
 
   const start = useCallback(async () => {
     setError(null);
@@ -30,7 +29,7 @@ export function useCamera(): UseCameraReturn {
         video: { facingMode: 'environment' },
         audio: false,
       });
-      setStream(mediaStream);
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
@@ -47,9 +46,11 @@ export function useCamera(): UseCameraReturn {
 
   useEffect(() => {
     return () => {
-      stream?.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
     };
-  }, [stream]);
+  }, []);
 
-  return { videoRef, stream, error, start, stop };
+  return { videoRef, error, start, stop };
 }
