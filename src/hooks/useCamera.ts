@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// Module-level stream so it persists across mount/unmount cycles.
+// This avoids repeated camera permission prompts on iOS Safari.
+let sharedStream: MediaStream | null = null;
+
 interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   error: string | null;
@@ -7,16 +11,18 @@ interface UseCameraReturn {
   stop: () => void;
 }
 
+function isStreamActive(stream: MediaStream | null): boolean {
+  if (!stream) return false;
+  return stream.getTracks().some((t) => t.readyState === 'live');
+}
+
 export function useCamera(): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const stop = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
+    // Only detach from the video element — don't kill the stream.
+    // The stream stays alive so we can reuse it without re-prompting.
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
@@ -25,13 +31,15 @@ export function useCamera(): UseCameraReturn {
   const start = useCallback(async () => {
     setError(null);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
-      });
-      streamRef.current = mediaStream;
+      // Reuse existing stream if it's still active
+      if (!isStreamActive(sharedStream)) {
+        sharedStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false,
+        });
+      }
       if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+        videoRef.current.srcObject = sharedStream;
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
@@ -46,8 +54,9 @@ export function useCamera(): UseCameraReturn {
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+      // On unmount, just detach — don't stop the stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, []);

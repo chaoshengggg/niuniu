@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card as CardType, CardId } from '../../types/card';
 import { SUIT_SYMBOLS } from '../../types/card';
 import type { EvaluationResult } from '../../types/evaluation';
+import { getTransformedValue } from '../../logic/transform';
 import { useCamera } from '../../hooks/useCamera';
 import { recognizeCards, preloadModel } from '../../services/cardRecognition';
 import styles from './CameraScanner.module.css';
@@ -129,34 +130,122 @@ export function CameraScanner({
       {/* Result section */}
       {scanState === 'result' && (
         <div className={styles.resultSection}>
-          {/* Recognized cards */}
-          <div className={styles.recognizedCards}>
-            <span className={styles.recognizedLabel}>Cards found:</span>
-            <div className={styles.chipList}>
-              {selectedCards.map((c) => {
-                const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
-                return (
-                  <span
-                    key={c.id}
-                    className={styles.chip}
-                    data-red={isRed || undefined}
-                  >
-                    {c.rank}{SUIT_SYMBOLS[c.suit]}
+          {result && result.type !== 'no_valid_base' ? (
+            <>
+              {/* Points + Multiplier header */}
+              <div className={styles.evalHeader}>
+                <div className={styles.pointsDisplay}>
+                  <span className={styles.pointsValue}>
+                    {result.type === 'five_face_cards'
+                      ? '五公'
+                      : (() => {
+                          const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
+                          return pts === 0 ? '牛牛' : `牛${pts}`;
+                        })()}
                   </span>
-                );
-              })}
-            </div>
-          </div>
+                  <span className={styles.pointsLabel}>
+                    {result.type === 'five_face_cards'
+                      ? 'Five Face Cards'
+                      : (() => {
+                          const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
+                          return pts === 0 ? 'Niu Niu · 10 Points' : `Niu ${pts} · ${pts} Points`;
+                        })()}
+                  </span>
+                </div>
+                <div className={styles.multiplierDisplay}>
+                  <span className={styles.resultBadge}>{result.multiplier}x</span>
+                  <span className={styles.multiplierLabel}>{result.label}</span>
+                </div>
+              </div>
 
-          {/* Evaluation result */}
-          {result && (
-            <div className={styles.evalResult}>
-              <span className={styles.resultBadge}>
-                {result.multiplier}x
-              </span>
-              <span className={styles.resultLabel}>{result.label}</span>
-            </div>
-          )}
+              {/* Card arrangement guide */}
+              {result.type !== 'five_face_cards' && (
+                <div className={styles.arrangementGuide}>
+                  <span className={styles.guideTitle}>How to show your cards</span>
+                  <div className={styles.arrangement}>
+                    {/* Base 3 */}
+                    <div className={styles.cardGroup}>
+                      <span className={styles.groupHeader}>Base (牛)</span>
+                      <div className={styles.groupCards}>
+                        {result.base.map((c) => {
+                          const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
+                          return (
+                            <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
+                              {c.rank}{SUIT_SYMBOLS[c.suit]}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <span className={styles.groupSum}>
+                        = {result.base.reduce((s, c) => s + getTransformedValue(c.rank), 0)}
+                      </span>
+                    </div>
+
+                    <div className={styles.groupDivider} />
+
+                    {/* Final 2 */}
+                    <div className={styles.cardGroup}>
+                      <span className={styles.groupHeader}>Final 2</span>
+                      <div className={styles.groupCards}>
+                        {result.final2.map((c) => {
+                          const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
+                          return (
+                            <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
+                              {c.rank}{SUIT_SYMBOLS[c.suit]}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <span className={styles.groupSum}>
+                        = {(result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10} pts
+                      </span>
+                    </div>
+                  </div>
+                  <span className={styles.guideHint}>
+                    Place base 3 cards on the left, final 2 on the right
+                  </span>
+                </div>
+              )}
+
+              {/* Five face cards — simple arrangement */}
+              {result.type === 'five_face_cards' && (
+                <div className={styles.arrangementGuide}>
+                  <span className={styles.guideTitle}>How to show your cards</span>
+                  <div className={styles.groupCards}>
+                    {selectedCards.map((c) => {
+                      const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
+                      return (
+                        <span key={c.id} className={styles.arrangeCard} data-red={isRed || undefined}>
+                          {c.rank}{SUIT_SYMBOLS[c.suit]}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <span className={styles.guideHint}>
+                    Show all 5 face cards — automatic win!
+                  </span>
+                </div>
+              )}
+            </>
+          ) : result && result.type === 'no_valid_base' ? (
+            <>
+              <div className={styles.evalHeader}>
+                <div className={styles.pointsDisplay}>
+                  <span className={styles.pointsValueMuted}>無牛</span>
+                  <span className={styles.pointsLabel}>No Valid Base · 0 Points</span>
+                </div>
+                <div className={styles.multiplierDisplay}>
+                  <span className={styles.resultBadgeMuted}>0x</span>
+                  <span className={styles.multiplierLabel}>{result.label}</span>
+                </div>
+              </div>
+              <div className={styles.arrangementGuide}>
+                <span className={styles.guideHint}>
+                  No 3-card combination sums to a multiple of 10
+                </span>
+              </div>
+            </>
+          ) : null}
 
           {selectedIds.size > 0 && selectedIds.size < 5 && (
             <div className={styles.warningText}>

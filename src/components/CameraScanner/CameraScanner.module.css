@@ -162,77 +162,186 @@
 
 /* Result section — below camera after recognition */
 .resultSection {
-  flex-shrink: 0;
-  padding: var(--gap-lg) var(--gap-md) calc(var(--gap-lg) + env(safe-area-inset-bottom));
+  flex: 0 1 auto;
+  overflow-y: auto;
+  padding: var(--gap-md) var(--gap-md) calc(var(--gap-lg) + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--gap-md);
+  -webkit-overflow-scrolling: touch;
 }
 
-.recognizedCards {
+/* Points + multiplier header */
+.evalHeader {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--gap-sm);
+  gap: var(--gap-lg);
   width: 100%;
-}
-
-.recognizedLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-}
-
-.chipList {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
-.chip {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  background: var(--card-selected);
-  border: 1px solid var(--gold-dim);
-  color: var(--gold-bright);
-  white-space: nowrap;
-}
-
-.chip[data-red] {
-  color: #e87070;
-}
-
-/* Evaluation result display */
-.evalResult {
+.pointsDisplay {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--gap-md);
-  padding: var(--gap-sm) 0;
+  gap: 2px;
+}
+
+.pointsValue {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  color: var(--gold-bright);
+  line-height: 1.2;
+}
+
+.pointsValueMuted {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.pointsLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.multiplierDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .resultBadge {
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 2rem;
-  padding: 6px 16px;
+  font-size: 1.4rem;
+  padding: 4px 12px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--gold), #dbb85a);
   color: #1a1207;
   line-height: 1.2;
 }
 
-.resultLabel {
-  font-size: 1rem;
+.resultBadgeMuted {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  background: var(--tier-0);
+  color: #fff;
+  line-height: 1.2;
+  opacity: 0.7;
+}
+
+.multiplierLabel {
+  font-size: 0.65rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 120px;
+}
+
+/* Card arrangement guide */
+.arrangementGuide {
+  width: 100%;
+  background: var(--felt-surface);
+  border: 1px solid var(--felt-border);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.guideTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-dim);
+}
+
+.arrangement {
+  display: flex;
+  align-items: stretch;
+  gap: var(--gap-md);
+  width: 100%;
+  justify-content: center;
+}
+
+.cardGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--gap-sm);
+  background: var(--felt-light);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--felt-border);
+  flex: 1;
+  max-width: 180px;
+}
+
+.groupHeader {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.groupCards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.arrangeCard {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  color: var(--black-suit);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px var(--card-shadow);
+}
+
+.arrangeCard[data-red] {
+  color: var(--red-suit);
+}
+
+.groupSum {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.groupDivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--felt-border);
+  margin: var(--gap-sm) 0;
+}
+
+.guideHint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
 }
 
 .warningText {
