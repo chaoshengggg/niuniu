@@ -178,6 +178,19 @@ describe('evaluateHand', () => {
     expect(result.type).toBe('no_valid_base');
   });
 
+  it('returns 2x when final 2 face cards sum to 20 (multiple of 10)', () => {
+    // Base: A(1)+4(4)+5(5)=10 ✓, final 2: J(10)+Q(10)=20 → sum%10===0 → 2x
+    const result = evaluateHand([
+      card('A', 'hearts'),
+      card('4', 'diamonds'),
+      card('5', 'clubs'),
+      card('J', 'spades'),
+      card('Q', 'hearts'),
+    ]);
+    expect(result.multiplier).toBe(2);
+    expect(result.type).toBe('sum_ten');
+  });
+
   it('handles sum-10 with 3↔6 swap in final 2', () => {
     // Base: J+Q+K=30, final 2: raw 3(→6) + raw 4(→4) = 10 → 2x
     const result = evaluateHand([

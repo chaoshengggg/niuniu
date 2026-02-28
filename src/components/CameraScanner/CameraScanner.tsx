@@ -32,7 +32,7 @@ export function CameraScanner({
   const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => {
-    start();
+    start().catch(() => {}); // Error state handled inside the hook
     preloadModel(); // Start loading ONNX model while camera initializes
     return () => stop();
   }, [start, stop]);
@@ -161,14 +161,6 @@ export function CameraScanner({
                     : (() => {
                         const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
                         return pts === 0 ? '牛牛' : `牛${pts}`;
-                      })()}
-                </span>
-                <span className={styles.pointsSubtext}>
-                  {result.type === 'five_face_cards'
-                    ? 'Five Face Cards'
-                    : (() => {
-                        const pts = (result.final2.reduce((s, c) => s + getTransformedValue(c.rank), 0)) % 10;
-                        return pts === 0 ? 'Niu Niu · 10 Points' : `Niu ${pts} · ${pts} Points`;
                       })()}
                 </span>
                 <span className={`${styles.multiplierBadge} ${styles[`tier${result.multiplier}`] ?? ''}`}>

@@ -61,7 +61,13 @@ export function preloadModel(): void {
   if (!sessionPromise) {
     sessionPromise = ort.InferenceSession.create(MODEL_PATH, {
       executionProviders: ['wasm'],
+    }).catch((err) => {
+      // Reset so next attempt retries instead of returning the failed promise
+      sessionPromise = null;
+      throw err;
     });
+    // Prevent unhandled rejection from crashing the page (e.g. on iOS Safari)
+    sessionPromise.catch(() => {});
   }
 }
 

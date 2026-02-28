@@ -34,9 +34,9 @@ function evaluateFinal2(final2: [Card, Card]): { type: MultiplierType; multiplie
     return { type: 'pair', multiplier: 3 };
   }
 
-  // Sum to exactly 10 → 2x
+  // Sum to a multiple of 10 → 2x (e.g. A+9=10, J+Q=20)
   const sum = getTransformedValue(a.rank) + getTransformedValue(b.rank);
-  if (sum === 10) {
+  if (sum % 10 === 0) {
     return { type: 'sum_ten', multiplier: 2 };
   }
 
