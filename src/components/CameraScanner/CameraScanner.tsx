@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card as CardType, CardId } from '../../types/card';
-import { SUITS, SUIT_SYMBOLS } from '../../types/card';
+import { SUIT_SYMBOLS } from '../../types/card';
 import type { EvaluationResult } from '../../types/evaluation';
 import { useCamera } from '../../hooks/useCamera';
+import { recognizeCards, preloadModel } from '../../services/cardRecognition';
 import styles from './CameraScanner.module.css';
+
+type ScanState = 'live' | 'analyzing' | 'result' | 'error';
 
 interface CameraScannerProps {
   deck: CardType[];
   selectedIds: Set<CardId>;
-  onToggle: (card: CardType) => void;
+  onSelectCards: (ids: CardId[]) => void;
   onClear: () => void;
   onClose: () => void;
   result: EvaluationResult | null;
@@ -17,122 +20,176 @@ interface CameraScannerProps {
 export function CameraScanner({
   deck,
   selectedIds,
-  onToggle,
+  onSelectCards,
   onClear,
   onClose,
   result,
 }: CameraScannerProps) {
-  const { videoRef, error, start, stop } = useCamera();
-  const maxSelected = selectedIds.size >= 5;
+  const { videoRef, error: cameraError, start, stop } = useCamera();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [scanState, setScanState] = useState<ScanState>('live');
+  const [scanError, setScanError] = useState<string | null>(null);
 
   useEffect(() => {
     start();
+    preloadModel(); // Start loading ONNX model while camera initializes
     return () => stop();
   }, [start, stop]);
 
-  const suitGroups = SUITS.map((suit) => ({
-    suit,
-    symbol: SUIT_SYMBOLS[suit],
-    cards: deck.filter((c) => c.suit === suit),
-  }));
+  const handleCapture = useCallback(async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    // Freeze frame onto canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+
+    setScanState('analyzing');
+    setScanError(null);
+
+    try {
+      const cardIds = await recognizeCards(canvas);
+
+      // Select the recognized cards (up to 5)
+      onSelectCards(cardIds.slice(0, 5));
+      setScanState('result');
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : 'Recognition failed. Try again.');
+      setScanState('error');
+    }
+  }, [videoRef, onSelectCards]);
+
+  const handleRetake = useCallback(() => {
+    setScanState('live');
+    setScanError(null);
+    onClear();
+  }, [onClear]);
 
   const selectedCards = deck.filter((c) => selectedIds.has(c.id));
+  const showFrozenFrame = scanState !== 'live';
 
   return (
     <div className={styles.overlay}>
-      {/* Camera feed */}
+      {/* Camera / captured image */}
       <div className={styles.cameraSection}>
-        {error ? (
+        {cameraError ? (
           <div className={styles.cameraError}>
             <span className={styles.cameraErrorIcon}>📷</span>
-            <span className={styles.cameraErrorText}>{error}</span>
+            <span className={styles.cameraErrorText}>{cameraError}</span>
           </div>
         ) : (
-          <video
-            ref={videoRef}
-            className={styles.video}
-            autoPlay
-            playsInline
-            muted
-          />
+          <>
+            <video
+              ref={videoRef}
+              className={styles.video}
+              autoPlay
+              playsInline
+              muted
+              style={{ display: showFrozenFrame ? 'none' : 'block' }}
+            />
+            <canvas
+              ref={canvasRef}
+              className={styles.video}
+              style={{ display: showFrozenFrame ? 'block' : 'none' }}
+            />
+          </>
         )}
+
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close scanner">
           ✕
         </button>
-      </div>
 
-      {/* Selected cards strip + result */}
-      <div className={styles.middleStrip}>
-        <span className={styles.counter}>
-          <span className={styles.counterCurrent}>{selectedIds.size}</span>/5
-        </span>
-        <div className={styles.chipList}>
-          {selectedCards.map((c) => {
-            const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
-            return (
-              <span
-                key={c.id}
-                className={styles.chip}
-                data-red={isRed || undefined}
-                onClick={() => onToggle(c)}
-              >
-                {c.rank}{SUIT_SYMBOLS[c.suit]}
-              </span>
-            );
-          })}
-        </div>
-        {result && (
-          <span className={styles.resultBadge}>
-            {result.multiplier}x {result.label.split(' ')[0]}
-          </span>
+        {/* Capture button — live state */}
+        {!cameraError && scanState === 'live' && (
+          <button className={styles.captureBtn} onClick={handleCapture} aria-label="Capture photo">
+            <span className={styles.captureBtnInner} />
+          </button>
         )}
-        {selectedIds.size > 0 && !result && (
-          <button className={styles.counter} onClick={onClear} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
-            Clear
+
+        {/* Analyzing overlay */}
+        {scanState === 'analyzing' && (
+          <div className={styles.analyzingOverlay}>
+            <div className={styles.spinner} />
+            <span className={styles.analyzingText}>Identifying cards...</span>
+          </div>
+        )}
+
+        {/* Retake button — result or error state */}
+        {(scanState === 'result' || scanState === 'error') && (
+          <button className={styles.retakeBtn} onClick={handleRetake}>
+            Retake
           </button>
         )}
       </div>
 
-      {/* Compact card picker */}
-      <div className={styles.pickerSection}>
-        {suitGroups.map(({ suit, symbol, cards }) => (
-          <div key={suit} className={styles.suitRow}>
-            <span
-              className={styles.suitIcon}
-              data-red={suit === 'hearts' || suit === 'diamonds' || undefined}
-            >
-              {symbol}
-            </span>
-            <div className={styles.cardGrid}>
-              {cards.map((card) => {
-                const selected = selectedIds.has(card.id);
-                const disabled = maxSelected && !selected;
-                const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
+      {/* Result section */}
+      {scanState === 'result' && (
+        <div className={styles.resultSection}>
+          {/* Recognized cards */}
+          <div className={styles.recognizedCards}>
+            <span className={styles.recognizedLabel}>Cards found:</span>
+            <div className={styles.chipList}>
+              {selectedCards.map((c) => {
+                const isRed = c.suit === 'hearts' || c.suit === 'diamonds';
                 return (
-                  <button
-                    key={card.id}
-                    className={`${styles.miniCard} ${selected ? styles.miniCardSelected : ''} ${disabled ? styles.miniCardDisabled : ''}`}
+                  <span
+                    key={c.id}
+                    className={styles.chip}
                     data-red={isRed || undefined}
-                    onClick={() => onToggle(card)}
-                    disabled={disabled && !selected}
-                    aria-label={`${card.rank} of ${card.suit}`}
-                    aria-pressed={selected}
                   >
-                    <span className={styles.miniRank}>{card.rank}</span>
-                    <span className={styles.miniSuit}>{symbol}</span>
-                  </button>
+                    {c.rank}{SUIT_SYMBOLS[c.suit]}
+                  </span>
                 );
               })}
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Done button when 5 cards selected */}
-      {result && (
-        <button className={styles.doneBtn} onClick={onClose}>
-          Done
-        </button>
+          {/* Evaluation result */}
+          {result && (
+            <div className={styles.evalResult}>
+              <span className={styles.resultBadge}>
+                {result.multiplier}x
+              </span>
+              <span className={styles.resultLabel}>{result.label}</span>
+            </div>
+          )}
+
+          {selectedIds.size > 0 && selectedIds.size < 5 && (
+            <div className={styles.warningText}>
+              Only {selectedIds.size} card{selectedIds.size !== 1 ? 's' : ''} detected. Try again with all 5 cards visible.
+            </div>
+          )}
+
+          <button className={styles.doneBtn} onClick={onClose}>
+            Done
+          </button>
+        </div>
+      )}
+
+      {/* Error section */}
+      {scanState === 'error' && (
+        <div className={styles.resultSection}>
+          <div className={styles.errorMessage}>
+            <span className={styles.errorIcon}>⚠️</span>
+            <span className={styles.errorText}>{scanError}</span>
+          </div>
+          <button className={styles.retryBtn} onClick={handleRetake}>
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {/* Hint text — live state */}
+      {scanState === 'live' && !cameraError && (
+        <div className={styles.hintSection}>
+          <span className={styles.hintText}>
+            Point your camera at your cards, then tap the capture button
+          </span>
+        </div>
       )}
     </div>
   );

@@ -30,6 +30,10 @@ function App() {
     setSelectedIds(new Set());
   }, []);
 
+  const handleSelectCards = useCallback((ids: CardId[]) => {
+    setSelectedIds(new Set(ids));
+  }, []);
+
   const handleOpenScanner = useCallback(() => {
     setScannerOpen(true);
   }, []);
@@ -53,7 +57,7 @@ function App() {
         <CameraScanner
           deck={deck}
           selectedIds={selectedIds}
-          onToggle={handleToggle}
+          onSelectCards={handleSelectCards}
           onClear={handleClear}
           onClose={handleCloseScanner}
           result={result}
