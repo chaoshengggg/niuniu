@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
  * Animates a number counting up from 1 to the target value.
  * Returns 0 instantly for target 0, otherwise counts 1 → 2 → ... → target.
  */
-export function useCountUp(target: number, stepMs = 120): number {
+export function useCountUp(target: number, stepMs = 350): number {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {

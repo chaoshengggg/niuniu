@@ -60,6 +60,8 @@ export function useCamera(): UseCameraReturn {
       }
       if (videoRef.current) {
         videoRef.current.srcObject = sharedStream;
+        // Explicitly play — autoPlay is unreliable on iOS Safari
+        await videoRef.current.play().catch(() => {});
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'NotAllowedError') {

@@ -44,6 +44,16 @@ export function CameraScanner({
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
+    // Ensure video is actually playing and has dimensions
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      try {
+        await video.play();
+        // Wait for a frame to be decoded
+        await new Promise((r) => requestAnimationFrame(r));
+      } catch { /* ignore */ }
+    }
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
     // Freeze frame onto canvas
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;

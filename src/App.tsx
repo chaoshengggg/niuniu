@@ -17,14 +17,22 @@ function App() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const result = useEvaluation(selectedIds, deck);
 
-  // Catch unhandled promise rejections to prevent iOS Safari page crashes
+  // Catch unhandled errors and promise rejections to prevent iOS Safari page crashes
   useEffect(() => {
-    const handler = (e: PromiseRejectionEvent) => {
+    const onRejection = (e: PromiseRejectionEvent) => {
       e.preventDefault();
       console.warn('Unhandled rejection caught:', e.reason);
     };
-    window.addEventListener('unhandledrejection', handler);
-    return () => window.removeEventListener('unhandledrejection', handler);
+    const onError = (e: ErrorEvent) => {
+      e.preventDefault();
+      console.warn('Unhandled error caught:', e.message);
+    };
+    window.addEventListener('unhandledrejection', onRejection);
+    window.addEventListener('error', onError);
+    return () => {
+      window.removeEventListener('unhandledrejection', onRejection);
+      window.removeEventListener('error', onError);
+    };
   }, []);
 
   const handleToggle = useCallback((card: Card) => {
